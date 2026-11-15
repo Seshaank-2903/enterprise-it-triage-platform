@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python requirements
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt psycopg2-binary>=2.9.9
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application and migration code
 COPY backend/ ./

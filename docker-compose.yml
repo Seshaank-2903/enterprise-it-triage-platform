@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # 1. Production PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: helpdesk_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-helpdesk_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMeSecurePassword123!}
+      POSTGRES_DB: ${POSTGRES_DB:-helpdesk_production}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helpdesk_admin} -d ${POSTGRES_DB:-helpdesk_production}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. ChromaDB Standalone Vector Database
+  chromadb:
+    image: chromadb/chroma:0.4.24
+    container_name: helpdesk_chromadb
+    restart: always
+    volumes:
+      - chroma_data:/chroma/chroma
+    ports:
+      - "8001:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+
+  # 3. Enterprise FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: env/docker/Dockerfile.backend
+    container_name: helpdesk_backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-helpdesk_admin}:${POSTGRES_PASSWORD:-ChangeMeSecurePassword123!}@postgres:5432/${POSTGRES_DB:-helpdesk_production}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - CHROMA_PERSIST_DIR=/chroma_data
+      - LOG_LEVEL=INFO
+    volumes:
+      - chroma_data:/chroma_data
+    ports:
+      - "8000:8000"
+
+  # 4. Production React Frontend (Served by Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: env/docker/Dockerfile.frontend
+    container_name: helpdesk_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
+  chroma_data:
