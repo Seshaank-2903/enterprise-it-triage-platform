@@ -1,0 +1,15 @@
+.git
+.gitignore
+.github
+README.md
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache
+backend/.venv
+frontend/node_modules
+frontend/dist
+backend/chroma_db
+backend/*.db
+.env
