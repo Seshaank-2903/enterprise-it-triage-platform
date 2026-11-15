@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "Enterprise AI IT Helpdesk & Guardrailed Triage Platform",
   "private": true,
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
     "dev": "npm --prefix frontend run dev",
-    "build": "npm --prefix frontend run build",
+    "build": "cd frontend && npm install && npm run build",
     "preview": "npm --prefix frontend run preview",
     "test": "npm --prefix frontend run test:run",
     "lint": "npm --prefix frontend run lint",
